@@ -12,25 +12,30 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def _get_openai_key():
+    """
+    Reads the API key from a local .env file (for running on your own
+    machine) or from Streamlit's secrets manager (for Streamlit Community
+    Cloud, which has no .env file -- secrets are set in the app dashboard
+    instead). Whichever is present wins; local .env is checked first.
+    """
+    key = os.getenv("OPENAI_API_KEY")
+    if key:
+        return key
+
+    try:
+        import streamlit as st
+        return st.secrets.get("OPENAI_API_KEY")
+    except Exception:
+        return None
+
+
 # --- API keys -----------------------------------------------------------
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = _get_openai_key()
 
 if not OPENAI_API_KEY:
-    print("[WARNING]: OPENAI_API_KEY is missing. Check your .env file setup!")
-
-# --- LLM settings ---------------------------------------------------------
-# gpt-4o-mini is a good balance of cost and quality for structured JSON output.
-# Swap to "gpt-4o" for higher quality, or replace this whole config with a
-# Gemini client if you'd rather use Google's API.
-LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
-
-# --- App-level defaults ---------------------------------------------------
-SUPPORTED_SPORTS = ["Cricket", "Football", "Badminton", "Tennis", "Basketball"]
-DIFFICULTY_LEVELS = ["Easy", "Medium", "Hard"]
-NUM_QUESTIONS = 4          # how many quiz questions to generate per request
-CHROMA_RESULTS_PER_QUERY = 3
-WEB_SEARCH_RESULTS = 3
-
-# Below this token-overlap ratio between an explanation and the retrieved
-# context, a question gets flagged as "unverified" in the grounding check.
-GROUNDING_OVERLAP_THRESHOLD = 0.25
+    print(
+        "[WARNING]: OPENAI_API_KEY is missing. Set it in a local .env file, "
+        "or in Streamlit Cloud under Settings -> Secrets."
+    )
